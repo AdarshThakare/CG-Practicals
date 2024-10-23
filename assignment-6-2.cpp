@@ -1,170 +1,287 @@
-#include <GL/glut.h>
 #include <iostream>
 
-typedef int index[4];
-typedef GLfloat color[3];
+#include <stdlib.h>
+
+#include <GL/glut.h>
 
 using namespace std;
 
-static GLfloat verts[][4] = {
-    {1.0, 1.0, 1.0},
-    {-1.0, 1.0, 1.0},
-    {-1.0, -1.0, 1.0},
-    {1.0, -1.0, 1.0},
-    {1.0, 1.0, -1.0},
-    {-1.0, 1.0, -1.0},
-    {-1.0, -1.0, -1.0},
-    {1.0, -1.0, -1.0},
-};
+float ballX = -0.8f;
 
-int rotx = 0, roty = 0, rotz = 0;
-float transx = 0, transy = 0, transz = 0;
-float sfactor = 1.0;
-unsigned int primtype = GL_POLYGON;
+float ballY = -0.3f;
 
-void keyboardHandler(unsigned char c, int x, int y)
+float ballZ = -1.2f;
+
+float colR = 3.0;
+
+float colG = 1.5;
+
+float colB = 1.0;
+
+float bgColR = 0.0;
+
+float bgColG = 0.0;
+
+float bgColB = 0.0;
+
+static int flag = 1;
+
+void drawBall(void)
 {
-    switch (c)
-    {
-    case '\e':
-        exit(0);
-        break;
-    case '8':
-        rotx -= 5;
-        break;
-    case '2':
-        rotx += 5;
-        break;
 
-    case '6':
-        roty += 5;
-        break;
+    glColor3f(colR, colG, colB); // set ball colour
 
-    case '4':
-        roty -= 5;
-        break;
+    glTranslatef(ballX, ballY, ballZ); // moving it toward the screen a bit on creation
 
-    case '7':
-        rotz += 5;
-        break;
-
-    case '9':
-        rotz -= 5;
-        break;
-
-    case '5':
-        rotx = 0;
-        roty = 0;
-        rotz = 0;
-        break;
-
-    case 'w':
-        transx -= 0.5;
-        break;
-    case 's':
-        transx += 0.5;
-        break;
-
-    case 'a':
-        transy += 0.5;
-        break;
-
-    case 'd':
-        transy -= 0.5;
-        break;
-
-    case 'e':
-        transz += 0.5;
-        break;
-
-    case 'q':
-        transz -= 0.5;
-        break;
-
-    case 'r':
-        transx = 0;
-        transy = 0;
-        transz = 0;
-        break;
-
-    case '+':
-        sfactor += 0.2;
-        break;
-    case '-':
-        sfactor -= 0.2;
-        break;
-
-    default:
-        break;
-    }
-
-    rotx = rotx % 360;
-    roty = roty % 360;
-    rotz = rotz % 360;
+    glutSolidSphere(0.05, 30, 30); // create ball.
 }
 
-void drawface(const index &indices, const color &clr)
+void drawAv(void)
 {
-    glBegin(primtype);
-    glColor3fv(clr);
-    for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); i++)
-    {
-        glVertex3fv(verts[indices[i]]);
-    }
+
+    glBegin(GL_POLYGON);
+
+    glColor3f(1.0, 1.0, 1.0);
+
+    glVertex3f(-0.9, -0.7, -1.0);
+
+    glVertex3f(-0.5, -0.1, -1.0);
+
+    glVertex3f(-0.2, -1.0, -1.0);
+
+    glVertex3f(0.5, 0.0, -1.0);
+
+    glVertex3f(0.6, -0.2, -1.0);
+
+    glVertex3f(0.9, -0.7, -1.0);
+
     glEnd();
 }
 
-void display(void)
+void drawClouds() {}
+
+void keyPress(int key, int x, int y)
+
 {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    // rot=0.1*(GLfloat)glutGet(GLUT_ELAPSED_TIME);
 
-    glRotatef(rotx, 1.0f, 0.0f, 0.0f);
-    glRotatef(roty, 0.0f, 1.0f, 0.0f);
-    glRotatef(rotz, 0.0f, 0.0f, 1.0f);
+    if (key == GLUT_KEY_RIGHT)
 
-    glRotatef(-45, 0.0f, 1.0f, 0.0f);
-    glRotatef(30, 1.0f, 0.0f, 0.0f);
-    glTranslatef(transx, transy, transz);
-    glScalef(sfactor, sfactor, sfactor);
+        ballX -= 0.05f;
+
+    if (key == GLUT_KEY_LEFT)
+
+        ballX += 0.05f;
+
+    glutPostRedisplay();
+}
+
+void initRendering()
+{
+
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_COLOR_MATERIAL);
+
+    glEnable(GL_LIGHTING); // Enable lighting
+
+    glEnable(GL_LIGHT0); // Enable light #0
+
+    glEnable(GL_LIGHT1); // Enable light #1
+
+    glEnable(GL_NORMALIZE);
+}
+
+// Called when the window is resized
+
+void handleResize(int w, int h)
+{
+
+    // Tell OpenGL how to convert from coordinates to pixel values
+
+    glViewport(0, 0, w, h);
+
+    glMatrixMode(GL_PROJECTION); // Switch to setting the camera perspective
+
+    // Set the camera perspective
+
+    glLoadIdentity();
+
+    gluPerspective(45.0,
+
+                   (double)w / (double)h,
+
+                   1.0,
+
+                   200.0);
+}
+
+void drawScene()
+
+{
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3f(0.0, 1.0, 1.0);
 
-    drawface({0, 1, 2, 3}, {1.0, 0.0, 0.0});
-    drawface({4, 5, 6, 7}, {1.0, 0.0, 1.0});
+    glClearColor(bgColR, bgColG, bgColB, 0.0);
 
-    drawface({0, 4, 7, 3}, {0.0, 0.0, 1.0});
-    drawface({1, 5, 6, 2}, {0.0, 1.0, 1.0});
+    glMatrixMode(GL_MODELVIEW);
 
-    drawface({0, 1, 5, 4}, {0.0, 1.0, 0.0});
-    drawface({3, 2, 6, 7}, {1.0, 1.0, 0.0});
+    glLoadIdentity();
+
+    // Add ambient light
+
+    GLfloat ambientColor[] = {0.2f, 0.2f, 0.2f, 1.0f};
+
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+    // Add positioned light
+
+    GLfloat lightColor0[] = {0.5f, 0.5f, 0.5f, 1.0f};
+
+    GLfloat lightPos0[] = {4.0f, 0.0f, 8.0f, 1.0f};
+
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor0);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+
+    // Add directed light
+
+    GLfloat lightColor1[] = {0.5f, 0.2f, 0.2f, 1.0f};
+
+    // Coming from the direction (-1, 0.5, 0.5)
+
+    GLfloat lightPos1[] = {-1.0f, 0.5f, 0.5f, 0.0f};
+
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
+
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+
+    // drawing the SUN
+
+    glPushMatrix();
+
+    drawBall();
 
     glPopMatrix();
+
+    // drawing the Mount Avarest
+
+    glPushMatrix();
+
+    drawAv();
+
+    glPopMatrix();
+
+    // drawing the Clouds
+
+    glPushMatrix();
+
+    drawClouds();
+
+    glPopMatrix();
+
     glutSwapBuffers();
 }
 
-int main(int argc, char **argv)
-{
-    glutInit(&argc, argv); // initialises glut
-    glutInitDisplayMode(   // used to set display modes
-        GLUT_DOUBLE |      // has a single buffer; double buffers not required as static scene
-        GLUT_RGB |         // sets color mode to RGB
-        GLUT_DEPTH         // enables depth, used for Z-buffer(for glut)
-    );
-    glutInitWindowPosition(100, 100);         // sets window position on screen
-    glutInitWindowSize(500, 500);             // sets window size
-    glutCreateWindow("GLTUT: cube");          // creates and sets the title of window
-    glClearColor(0.0, 0.0, 0.0, 0.0);         // black background, used everytime glClear(); is called
-    glMatrixMode(GL_PROJECTION);              // setup viewing projection
-    glLoadIdentity();                         // start with identity matrix
-    glOrtho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0); // setup a 10x10x2 viewing world
-    glEnable(GL_DEPTH_TEST);                  // enables depth in opengl
+// float _angle = 30.0f;
 
-    glutDisplayFunc(display);
-    glutIdleFunc(display);
-    glutKeyboardFunc(keyboardHandler);
+void update(int value)
+{
+
+    if (ballX > 0.9f)
+
+    {
+
+        ballX = -0.8f;
+
+        ballY = -0.3f;
+
+        flag = 1;
+
+        colR = 2.0;
+
+        colG = 1.50;
+
+        colB = 1.0;
+
+        bgColB = 0.0;
+    }
+
+    if (flag)
+
+    {
+
+        ballX += 0.001f;
+
+        ballY += 0.0007f;
+
+        colR -= 0.001;
+
+        colG += 0.002;
+
+        colB += 0.005;
+
+        bgColB += 0.001;
+
+        if (ballX > 0.01)
+
+        {
+
+            flag = 0;
+        }
+    }
+
+    if (!flag)
+
+    {
+
+        ballX += 0.001f;
+
+        ballY -= 0.0007f;
+
+        colR += 0.001;
+
+        colB -= 0.01;
+
+        bgColB -= 0.001;
+
+        if (ballX < -0.3)
+
+        {
+
+            flag = 1;
+        }
+    }
+
+    glutPostRedisplay();
+
+    glutTimerFunc(25, update, 0);
+}
+
+int main(int argc, char **argv)
+
+{
+
+    glutInit(&argc, argv);
+
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
+    glutInitWindowSize(400, 400);
+
+    glutCreateWindow("Sun");
+
+    initRendering();
+
+    glutDisplayFunc(drawScene);
+
+    glutFullScreen();
+
+    glutSpecialFunc(keyPress);
+
+    glutReshapeFunc(handleResize);
+
+    glutTimerFunc(25, update, 0);
+
     glutMainLoop();
-    return 0;
+
+    return (0);
 }

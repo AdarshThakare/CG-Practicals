@@ -1,109 +1,94 @@
 #include <iostream>
 #include <graphics.h>
+
 using namespace std;
-
-static int LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8, xl, yl, xh, yh;
-
-int getcode(int x, int y)
+class drawpoly
 {
-    int code = 0;
-    // Perform Bitwise OR to get outcode
-    if (y > yh)
-        code |= TOP;
-    if (y < yl)
-        code |= BOTTOM;
-    if (x < xl)
-        code |= LEFT;
-    if (x > xh)
-        code |= RIGHT;
-    return code;
-}
+public:
+    int x, y, temp, n, i, j, k, dy, dx;
+    int a[20][2], xi[20];
+    float slope[20];
 
-int main()
-{
-    int gdriver = DETECT, gmode;
-
-    cout << "Enter bottom left and top right co-ordinates of window: ";
-    cin >> xl >> yl >> xh >> yh;
-
-    int x1, y1, x2, y2;
-    cout << "Enter the endpoints of the line: ";
-    cin >> x1 >> y1 >> x2 >> y2;
-    initgraph(&gdriver, &gmode, NULL);
-    setcolor(BLUE);
-    rectangle(xl, yl, xh, yh);
-    line(x1, y1, x2, y2);
-    getch();
-
-    int outcode1 = getcode(x1, y1), outcode2 = getcode(x2, y2);
-    int accept = 0; // decides if line is to be drawn
-    while (1)
+    void drawpoly1()
     {
-        float m = (float)(y2 - y1) / (x2 - x1);
-        // Both points inside. Accept line
-        if (outcode1 == 0 && outcode2 == 0)
+
+        cout << "\n enter the no .of vertices of polygoan";
+        cin >> n;
+        cout << "\n enter the coordinates of edges one by one";
+        for (i = 0; i < n; i++)
         {
-            accept = 1;
-            break;
+            cout << "X" << i << "Y" << i << ":";
+            cin >> a[i][0] >> a[i][1];
         }
-        // AND of both codes != 0.Line is outside. Reject line
-        else if ((outcode1 & outcode2) != 0)
+        a[n][0] = a[0][0]; // last point should be connceted to first point to make a close fig
+        a[n][1] = a[0][1];
+
+        for (i = 0; i < n; i++)
         {
-            break;
+            line(a[i][0], a[i][1], a[i + 1][0], a[i + 1][1]); // draw poly
         }
-        else
+        getch();
+    }
+
+} d;
+class fillpoly : public drawpoly
+{
+public:
+    void fillpoly1()
+    {
+
+        for (i = 0; i < n; i++)
         {
-            int x, y;
-            int temp;
-            // Decide if point1 is inside, if not, calculate intersection
-            if (outcode1 == 0)
-                temp = outcode2;
-            else
-                temp = outcode1;
-            // Line clips top edge
-            if (temp & TOP)
+            dy = a[i + 1][1] - a[i][1]; // dy=y2-y1
+            dx = a[i + 1][0] - a[i][0]; // dx=x2-x1
+            if (dy == 0)
+                slope[i] = 1.0; // y is always one because scanline diff is only by -1
+            if (dx == 0)
+                slope[i] = 0.0;
+            if (dy != 0 && dx != 0) // calculate inverse slope if polygon is in 4th quadradent.
             {
-                x = x1 + (yh - y1) / m;
-                y = yh;
+                slope[i] = (float)dx / dy; // formula for inverse slope
             }
-            else if (temp & BOTTOM)
-            { // Line clips bottom edge
-                x = x1 + (yl - y1) / m;
-                y = yl;
-            }
-            else if (temp & LEFT)
-            { // Line clips left edge
-                x = xl;
-                y = y1 + m * (xl - x1);
-            }
-            else if (temp & RIGHT)
-            { // Line clips right edge
-                x = xh;
-                y = y1 + m * (xh - x1);
-            }
-            // Check which point we had selected earlier as temp, and replace its co-ordinates
-            if (temp == outcode1)
+        }
+
+        for (y = 0; y < 480; y++) // for reverse filling(y=480;y>0;y--)
+        {
+            k = 0;
+            for (i = 0; i < n; i++)
             {
-                x1 = x;
-                y1 = y;
-                outcode1 = getcode(x1, y1);
+                if (((a[i][1] <= y) && (a[i + 1][1] > y)) || ((a[i][1] > y) && (a[i + 1][1] <= y))) // check ymin or ymax is less or greater
+                {
+                    xi[k] = (int)(a[i][0]) + slope[i] * (y - a[i][1]); // calculate intersection
+                    k++;
+                }
             }
-            else
+            for (j = 0; j < k - 1; j++)
             {
-                x2 = x;
-                y2 = y;
-                outcode2 = getcode(x2, y2);
+                for (i = 0; i < k - 1; i++)
+                {
+                    if (xi[i] > xi[i + 1])
+                    {
+                        temp = xi[i];
+                        xi[i] = xi[i + 1];
+                        xi[i + 1] = temp;
+                    }
+                }
+                setcolor(13);
+                for (i = 0; i < k; i += 2)
+                {
+                    line(xi[i], y, xi[i + 1], y); // draw the line using intersection points only
+                    delay(20);
+                }
             }
         }
     }
-
-    cout << "After clipping:";
-    if (accept)
-        cleardevice();
-    rectangle(xl, yl, xh, yh);
-    setcolor(WHITE);
-    line(x1, y1, x2, y2);
-    delay(5000);
+} f;
+int main()
+{
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, NULL);
+    f.drawpoly1();
+    f.fillpoly1();
     closegraph();
     return 0;
 }
